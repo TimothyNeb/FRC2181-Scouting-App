@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "modular-data-entry",
-    "slug": "modular-data-entry",
+    "name": "StickerSmash",
+    "slug": "StickerSmash",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "modulardataentry",
+    "scheme": "stickersmash",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
