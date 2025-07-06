@@ -1,0 +1,20 @@
+<form id = "scouting-form">
+    <label> Team Number:</label>
+    <input type = "number" name = "teamNumber" required>
+
+    <Label> Auto Cones Scored:</Label>
+    <input type="number" name ="Auto Cones"><br>
+
+    <label>Teleop cubes Scored:</label>
+    <input type="number" name="teleopCubess"> <br>
+
+    <label>Climb Success?</label>
+    <select name = "climb Success?">
+        <option value="yes">yes</option>
+        <option value="No">no</option>
+    </select><br>
+
+    <button type = "submit"> Save Entry</button>
+
+    <button onclick="downloadCSV()">Export CSV</button>
+</form>
