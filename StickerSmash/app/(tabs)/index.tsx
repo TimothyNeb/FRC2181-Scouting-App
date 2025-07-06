@@ -1,18 +1,40 @@
-import { Text, View, StyleSheet } from "react-native";
+import { View, StyleSheet, ImageSourcePropType, Platform } from "react-native";
 import { Link } from "expo-router";
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { captureRef } from 'react-native-view-shot';
+import domtoimage from 'dom-to-image';
 
 import * as ImagePicker from 'expo-image-picker';
+import ImageViewer from "@/componets/ImageViewer";
+
+import * as MediaLibrary from 'expo-media-library';
 
 import Button from "@/componets/button";
-import ImageViewer from "@/componets/ImageViewer";
+import CircleButton from "@/componets/CircleButton";
+import IconButton from "@/componets/IconButton";
+
+import EmojiPicker from "@/componets/EmojiPicker";
+import EmojiList from "@/componets/EmojiList";
+import EmojiSticker from "@/componets/EmojiSticker";
+import domToImage from "dom-to-image";
+
+
 
 const PlaceholderImage = require('@/assets/images/background-image.png');
 
 export default function Index() {
+  const imageRef = useRef<View>(null);
+  const [status, requestPermission] = MediaLibrary.usePermissions();
 
   const [selectedImage, setSelectedImage] = useState <string | undefined> (undefined);
-  const [showAddOptions, setShowAddOptions] = useState<boolean>(false);
+  const [showAddOptions, setShowAddOptions] = useState <boolean>(false);
+  const [isModalVisable, setIsModalVisable] = useState <boolean>(false);
+  const [pickedEmoji, setPickedEmoji] = useState <ImageSourcePropType | undefined> (undefined)
+
+  if (status === null) {
+    requestPermission()
+  }
 
   const pickImageAsync = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -29,16 +51,84 @@ export default function Index() {
     }
   }
 
+  const onReset = () => {
+    setShowAddOptions(false);
+  }
+
+  const onAddSticker = () => {
+    setIsModalVisable(true);
+  }
+
+  const onModalClose = () => {
+    setIsModalVisable(false);
+  }
+  
+  const onSaveImageAsync = async () => {
+    if (Platform.OS !== 'web') {
+      try {
+        const localURI = await captureRef(imageRef, {
+          height: 400,
+          quality: 1,
+        });
+
+        await MediaLibrary.saveToLibraryAsync(localURI);
+        if (localURI) {
+          alert('Saved!');
+        }
+      } catch (e) {
+        console.log(e);
+      }
+    } else {
+      try {
+        const dataURL = await domtoimage.toJpeg(imageRef.current, {
+          quality: .95,
+          width: 320,
+          height: 440,
+        });
+
+        let link = document.createElement('a');
+        link.download = 'sticker-smash.jpeg'
+        link.href = dataURL;
+        link.click();
+      } catch (e) {
+        console.log(e)
+      }
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <GestureHandlerRootView style = {styles.container}>
       <View style={styles.imageContainer}>
-        <ImageViewer 
-          imgSource = {PlaceholderImage}
-          selectedImage = {selectedImage}
-        />
+        <View 
+          ref = {imageRef}
+          collapsable = {false}
+        >
+          <ImageViewer 
+            imgSource = {PlaceholderImage}
+            selectedImage = {selectedImage}
+          />
+          {pickedEmoji && <EmojiSticker 
+            imageSize = {40}
+            stickerSource={pickedEmoji}
+          />} 
+        </View>
       </View>
       {showAddOptions ? (
-        <View />
+        <View style = {styles.optionsContainer}>
+          <View style = {styles.optionsRow}>
+            <IconButton 
+              icon = "refresh"
+              label = "Reset"
+              onPress = {onReset}
+            />
+            <CircleButton onPress = {onAddSticker}/>
+            <IconButton 
+              icon = "save-alt" 
+              label = "Save"
+              onPress={onSaveImageAsync}
+            />
+          </View>
+        </View>
       ) : (
         <View style  = {styles.footerContainer}>
           <Button 
@@ -52,13 +142,16 @@ export default function Index() {
           />
         </View>
       )}
-      
-      {/* <Text style ={styles.text}>Home screen</Text>
-      <Link href="/about" style ={styles.button}>
-        Go to About Scren
-      </Link> */}
-
-    </View>
+      <EmojiPicker
+        isVisable = {isModalVisable}
+        onClose = {onModalClose}
+      >
+        <EmojiList 
+          onSelect = {setPickedEmoji}
+          onCloseModal = {onModalClose} 
+        />
+      </EmojiPicker>
+    </GestureHandlerRootView>
   )
 }
 
@@ -74,20 +167,20 @@ const styles = StyleSheet.create({
   imageContainer: {
     flex: 1
   },  
-  
-  text: {
-    color: '#fff'
-  },
-
-  button: {
-    fontSize: 20,
-    textDecorationLine: 'underline',
-    color: '#fff',
-  },
 
   footerContainer: {
     flex: 1 / 3,
     alignItems: 'center',
+  },
+
+    optionsContainer: {
+    position: 'absolute',
+    bottom: 80,
+  },
+
+  optionsRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
   },
 
 });
